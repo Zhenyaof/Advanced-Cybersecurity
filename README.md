@@ -301,6 +301,93 @@ ciscoasa(config)# access-group outside_access_in in interface outside
 - This scenario covered the comprehensive configuration of ASA 5505 using CLI, focusing on establishing a secure and scalable network infrastructure.
 - Implementing these configurations ensures secure traffic flows, controlled access via NAT and ACLs, and robust firewall policies.
 - The structured approach using zones, NAT, ACLs, and inspection policies helps in maintaining security standards and enables efficient network traffic management.
+- 
+
+
+
+# Scenario 3 Summary
+
+## Introduction
+This project demonstrates the configuration of a site-to-site IPsec VPN between two routers (R1 and R2) in a simulated network topology. The VPN tunnel secures traffic flow between the LANs of R1 and R2, with R2 acting as a pass-through. The VPN configuration ensures secure transmission over unprotected networks, leveraging IPsec protocols at the network layer.
+
+## Key Features
+
+### 1. VPN Setup
+Configured a site-to-site IPsec VPN from R1 to R2, where R2 acts as a pass-through router. This means that R2 does not decrypt or inspect the VPN traffic but simply forwards it between the two VPN endpoints (R1 and R2).
+
+### 2. Enabling Security Package
+To enable VPN features, the Security Technology package was activated on both routers using the following steps:
+1. Checked the license status:
+   ```
+   show version
+   ```
+2. Enabled the security package if necessary:
+   ```
+   license boot module c1900 technology-package securityk9
+   ```
+3. Accepted the license agreement, saved the configuration, and reloaded the routers:
+   ```
+   write memory
+   reload
+   ```
+
+### 3. Traffic Identification with ACLs
+Defined interesting traffic that should be encrypted using Access Control Lists (ACL 110) on both routers. This traffic triggers the VPN tunnel:
+- On R1:
+  ```
+  access-list 110 permit ip 172.151.100.0 0.0.0.255 172.127.20.0 0.0.0.255
+  ```
+- On R2:
+  ```
+  access-list 110 permit ip 172.127.20.0 0.0.0.255 172.151.100.0 0.0.0.255
+  ```
+
+### 4. ISAKMP Phase 1 Configuration
+Defined the ISAKMP (Internet Security Association and Key Management Protocol) settings to establish secure peer authentication and key exchange:
+``` 
+crypto isakmp policy 10
+ encryption aes 256
+ authentication pre-share
+ group 5
+exit
+crypto isakmp key cybersec1 address <peer-ip>
+```
+
+### 5. IPsec Phase 2 Configuration
+Configured the IPsec settings to define how data will be encrypted and authenticated:
+1. Defined the transform set:
+   ```
+   crypto ipsec transform-set  R1-R3 esp-aes esp-sha-hmac
+   ```
+2. Created the crypto map and applied it to the interface:
+   ```
+   crypto map CMAP 10 ipsec-isakmp
+   set peer <peer-ip>
+   set transform-set VPN-SET
+   match address 110
+   exit
+   interface <interface>
+   crypto map CMAP
+   ```
+   #### Attention
+      The same goes for the second peer but notice that the interfaces and networks are different.
+
+### 6. File Upload and Analysis
+To verify the VPN functionality, a file was uploaded from the R1 LAN to the FTP server in R2's LAN. The FTP server was configured with the password `cisco12345`. A sniffer tool was then used to analyze the traffic and confirm that the transfer occurred securely over the VPN tunnel.
+
+### 7. Map and Credentials
+- **Crypto Map Name:** `CMAP`
+- **FTP Server Password:** `cisco12345`
+- **SSH Username/Password:** `admin/cisco12345`
+- **Console Password:** `cisco12345`
+- **VTY Password:** `cisco12345`
+- **Enable Password:** `cisco12345`
+- **OSPF Process ID:** `1`
+
+## Summary
+This VPN configuration project successfully established a site-to-site IPsec VPN between R1 and R2. The configuration involved setting up ISAKMP and IPsec phases, creating and applying crypto maps, and identifying interesting traffic through ACLs. The secure file transfer and subsequent analysis validated the effectiveness of the VPN tunnel.
+
+
 
 
 
